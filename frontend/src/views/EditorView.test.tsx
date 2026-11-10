@@ -17,6 +17,7 @@ it('configures language first, localizes descriptions, scrolls between steps and
     const root = createRoot(container);
     const character = structuredClone(defaultCharacter);
     character.id = 'existing-character';
+    character.voice = 'female';
     character.persona.biography = '日本の海の近くで育ちました。';
     vi.mocked(api.saveCharacter).mockImplementation(async (value) => value);
     const button = (text: string) =>
@@ -57,7 +58,13 @@ it('configures language first, localizes descriptions, scrolls between steps and
                 'input[placeholder="Comment s’appellera ton ami ?"]',
             ),
         ).not.toBeNull();
+        expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe(
+            'Gênero e voz',
+        );
+        expect(container.querySelector('.voice-choice.is-selected')?.textContent).toBe('Féminin');
+        await click(button('Rosto'));
         expect(container.textContent).toContain('Couleur des yeux');
+        expect(container.querySelector('.options-presentation')).toBeNull();
         expect(container.querySelector('.steps')?.textContent).toContain(
             'Personalidade e identidade',
         );
@@ -79,6 +86,8 @@ it('configures language first, localizes descriptions, scrolls between steps and
         await click(button('Salvar'));
         expect(api.saveCharacter).toHaveBeenCalledWith(
             expect.objectContaining({
+                voice: 'female',
+                appearance: expect.objectContaining({ presentation: 'feminine' }),
                 persona: expect.objectContaining({
                     description_language: 'fr',
                     traits: ['Curioso'],

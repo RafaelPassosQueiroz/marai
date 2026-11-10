@@ -1,8 +1,19 @@
 export type Language = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ja';
 export type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
-export type Scene = 'park' | 'therapy' | 'candy' | 'paris' | 'theme' | 'kyoto';
+export type Scene =
+    | 'park'
+    | 'therapy'
+    | 'candy'
+    | 'paris'
+    | 'theme'
+    | 'kyoto'
+    | 'stadium'
+    | 'oktoberfest'
+    | 'london'
+    | 'rio'
+    | 'venice';
 export interface Appearance {
-    presentation: 'masculine' | 'feminine' | 'neutral';
+    presentation: 'masculine' | 'feminine';
     skin: string;
     face: 'oval' | 'round' | 'angular';
     eyes: 'almond' | 'round' | 'relaxed';
@@ -10,7 +21,23 @@ export interface Appearance {
     brows: 'soft' | 'bold' | 'arched';
     nose: 'soft' | 'straight' | 'round';
     mouth: 'smile' | 'gentle' | 'wide';
-    hair: 'swept' | 'curly' | 'long' | 'bob' | 'short' | 'braids';
+    hair:
+        | 'swept'
+        | 'curly'
+        | 'long'
+        | 'bob'
+        | 'short'
+        | 'braids'
+        | 'pixie'
+        | 'waves'
+        | 'ponytail'
+        | 'bun'
+        | 'afro'
+        | 'coils'
+        | 'fade'
+        | 'buzz'
+        | 'locs'
+        | 'bald';
     hair_color: string;
     outfit: 'jacket' | 'hoodie' | 'shirt' | 'sweater';
     clothing_color: string;

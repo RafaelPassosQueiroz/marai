@@ -1,15 +1,48 @@
 import { useId } from 'react';
 import type { Scene as SceneType } from '../models/types';
 
+const referenceScenes: Partial<Record<SceneType, { src: string; label: string }>> = {
+    paris: { src: '/scenes/paris.png', label: 'Encontro em Paris, às margens do Sena' },
+    kyoto: { src: '/scenes/kyoto.png', label: 'Jardim japonês com cerejeiras e pagode' },
+    candy: {
+        src: '/scenes/candy-land.png',
+        label: 'Ilha de doces com castelo e caminho de waffle',
+    },
+    stadium: { src: '/scenes/camp-nou.png', label: 'Camp Nou, vista do campo e das arquibancadas' },
+    theme: {
+        src: '/scenes/disney.png',
+        label: 'Disney, com castelo, roda-gigante e montanha-russa',
+    },
+    oktoberfest: {
+        src: '/scenes/oktoberfest.png',
+        label: 'Oktoberfest, com casas da Baviera e barracas de festa',
+    },
+    london: { src: '/scenes/london.png', label: 'Londres, com Big Ben, Parlamento e rio Tâmisa' },
+    rio: {
+        src: '/scenes/rio-de-janeiro.png',
+        label: 'Rio de Janeiro, com praia, Pão de Açúcar e Cristo Redentor',
+    },
+    venice: { src: '/scenes/venice.png', label: 'Veneza, com canal, ponte e gôndola' },
+};
+
 export function Scene({ scene, className = '' }: { scene: SceneType; className?: string }) {
     const id = useId().replace(/:/g, '');
-    const pink = scene === 'candy' || scene === 'kyoto';
-    const night = scene === 'theme';
+    const reference = referenceScenes[scene];
+    if (reference)
+        return (
+            <img
+                src={reference.src}
+                alt={reference.label}
+                className={`scene scene-reference ${className}`}
+                draggable={false}
+                decoding="async"
+            />
+        );
     const indoor = scene === 'therapy';
     const tree = (x: number, y: number, scale = 1, tint = '#61a77c') => (
         <g transform={`translate(${x} ${y}) scale(${scale})`}>
             <path d="M-18 190L-12 51L-48 13L-37 9L-3 49L27-3L39 4L13 65L22 190Z" fill="#67816c" />
-            <g className="tree-leaves" fill={tint}>
+            <g fill={tint}>
                 <ellipse cx="-38" cy="0" rx="66" ry="52" />
                 <ellipse cx="28" cy="-29" rx="72" ry="56" />
                 <ellipse cx="66" cy="17" rx="62" ry="48" />
@@ -25,7 +58,7 @@ export function Scene({ scene, className = '' }: { scene: SceneType; className?:
         </g>
     );
     const flower = (x: number, y: number, color = '#fff7d1') => (
-        <g transform={`translate(${x} ${y})`} className="flower">
+        <g transform={`translate(${x} ${y})`}>
             <path
                 d="M0 0L-2 24M-2 16Q-18 3-16 15Z"
                 stroke="#529065"
@@ -50,23 +83,23 @@ export function Scene({ scene, className = '' }: { scene: SceneType; className?:
         >
             <defs>
                 <linearGradient id={`${id}sky`} x2="0" y2="1">
-                    <stop stopColor={night ? '#415578' : pink ? '#efdde9' : '#aedfee'} />
-                    <stop offset="1" stopColor={night ? '#a5b2bd' : '#f3f7df'} />
+                    <stop stopColor="#aedfee" />
+                    <stop offset="1" stopColor="#f3f7df" />
                 </linearGradient>
                 <linearGradient id={`${id}water`} x2="0" y2="1">
                     <stop stopColor="#9bcac7" />
                     <stop offset="1" stopColor="#78b6b7" />
                 </linearGradient>
                 <linearGradient id={`${id}ground`} x2="0" y2="1">
-                    <stop stopColor={pink ? '#b9cba5' : '#adca83'} />
-                    <stop offset="1" stopColor={pink ? '#d8d5a7' : '#d5dfa0'} />
+                    <stop stopColor={'#adca83'} />
+                    <stop offset="1" stopColor={'#d5dfa0'} />
                 </linearGradient>
             </defs>
             <rect width="1440" height="900" fill={`url(#${id}sky)`} />
             {!indoor && (
                 <>
                     <circle cx="1140" cy="152" r="57" fill="#fff6cf" opacity=".8" />
-                    <g className="clouds" fill="white" opacity=".65">
+                    <g fill="white" opacity=".65">
                         <path d="M100 140q12-35 48-19q20-41 57-7q40-9 47 25Z" />
                         <path d="M650 196q7-27 35-19q23-49 54-12q28-14 42 30Z" />
                         <path d="M1000 290q18-36 55-17q24-48 63-12q35-4 41 27Z" />
@@ -100,10 +133,7 @@ export function Scene({ scene, className = '' }: { scene: SceneType; className?:
                         <path d="M200 643h170m270-23h130m245 46h202M123 689h92m352-15h169m287 32h149" />
                         <path d="M810 647h78m266-31h100" />
                     </g>
-                    <path
-                        d="M0 778Q470 682 796 758T1440 733V900H0Z"
-                        fill={pink ? '#c5d3a1' : '#bfce8d'}
-                    />
+                    <path d="M0 778Q470 682 796 758T1440 733V900H0Z" fill="#bfce8d" />
                     <path
                         d="M994 900Q899 780 1067 737L1174 745Q1002 801 1231 900Z"
                         fill="#e9d7b2"
@@ -111,7 +141,7 @@ export function Scene({ scene, className = '' }: { scene: SceneType; className?:
                     />
                 </>
             )}
-            {(scene === 'park' || scene === 'paris') && (
+            {scene === 'park' && (
                 <>
                     {tree(120, 326, 2.1, '#6fa77a')}
                     {tree(1320, 359, 2.2, '#73a77d')}
@@ -137,21 +167,6 @@ export function Scene({ scene, className = '' }: { scene: SceneType; className?:
                         <path d="M-28-49L0-72L28-49ZM-15-2H15" />
                         <circle cy="-77" r="5" />
                     </g>
-                    {scene === 'paris' && (
-                        <g
-                            transform="translate(660 210)"
-                            fill="none"
-                            stroke="#8a9284"
-                            strokeWidth="8"
-                            opacity=".85"
-                        >
-                            <path d="M0 0Q-5 164-78 323H-48Q-30 261 0 260Q30 261 48 323H78Q5 164 0 0Z" />
-                            <path
-                                d="M-39 222H39M-24 169H24M-12 100H12M-53 250H53M0-20V0M-34 222L24 169M34 222L-24 169M-48 250L39 222M48 250L-39 222"
-                                strokeWidth="5"
-                            />
-                        </g>
-                    )}
                 </>
             )}
             {scene === 'therapy' && (
@@ -243,115 +258,6 @@ export function Scene({ scene, className = '' }: { scene: SceneType; className?:
                     />
                     <path d="M935 305Q961 204 1056 190Q1049 288 935 305" fill="#8ebca0" />
                     <path d="M936 306L1033 212" stroke="#f2efd9" strokeWidth="4" />
-                </>
-            )}
-            {scene === 'candy' && (
-                <>
-                    {tree(100, 350, 1.8, '#e8a4b3')}
-                    {tree(1350, 340, 1.9, '#b4a2d1')}
-                    {[270, 1070, 1260].map((x, i) => (
-                        <g key={x} transform={`translate(${x} ${470 + i * 20})`}>
-                            <path d="M0 0V210" stroke="#fdf5df" strokeWidth="17" />
-                            <circle
-                                r="66"
-                                fill={i % 2 ? '#8acbc3' : '#e9a8b5'}
-                                stroke="#fff5e1"
-                                strokeWidth="10"
-                            />
-                            <path
-                                d="M0-43Q60-15 19 25Q-20 60-38 5Q-47-30 0-20Q25-12 8 5"
-                                fill="none"
-                                stroke="#fff4dd"
-                                strokeWidth="10"
-                                strokeLinecap="round"
-                            />
-                        </g>
-                    ))}
-                    <path d="M780 566V467L900 369L1019 467V567Z" fill="#f0c2a8" />
-                    <path
-                        d="M757 468L900 348L1045 468"
-                        fill="#d795ad"
-                        stroke="#f4e0ca"
-                        strokeWidth="16"
-                    />
-                    <path d="M877 568V511Q900 479 925 511V568" fill="#ad90ad" />
-                </>
-            )}
-            {scene === 'theme' && (
-                <>
-                    <g
-                        transform="translate(900 320)"
-                        fill="#c9b7d5"
-                        stroke="#958eaf"
-                        strokeWidth="3"
-                    >
-                        <path d="M-110 280V99H110V280Z" />
-                        <path d="M-145 280V80H-70V280M70 280V80H145V280" />
-                        <path d="M-165 80L-108-12L-51 80ZM51 80L108-12L165 80Z" fill="#7d88b3" />
-                        <path d="M-42 99V-8H42V99ZM-63-8L0-110L63-8Z" />
-                        <path d="M0-110V-149L39-135L0-124" fill="#e3ba74" />
-                        <path d="M-29 280V216Q0 172 29 216V280" fill="#e6c789" />
-                    </g>
-                    <g fill="none" stroke="#e4d9af" opacity=".9">
-                        <path d="M0 260Q720 550 1440 260" strokeWidth="3" />
-                        {[80, 230, 380, 530, 680, 830, 980, 1130, 1280].map((x, i) => (
-                            <circle
-                                className="light"
-                                key={x}
-                                cx={x}
-                                cy={280 + Math.sin((x / 1440) * Math.PI) * 125}
-                                r="7"
-                                fill={i % 2 ? '#ffdfa2' : '#f7c7b1'}
-                            />
-                        ))}
-                    </g>
-                    {tree(100, 340, 1.6, '#5d8e81')}
-                    {tree(1300, 400, 1.4, '#598c82')}
-                </>
-            )}
-            {scene === 'kyoto' && (
-                <>
-                    {tree(110, 320, 2, '#dba3b1')}
-                    {tree(1320, 350, 2.2, '#e6b0bf')}
-                    <g transform="translate(880 460)">
-                        <path d="M-65 140V-110M65 140V-110" stroke="#b16958" strokeWidth="19" />
-                        <path
-                            d="M-120-98Q0-72 120-98M-100-50H100"
-                            stroke="#ad5d50"
-                            strokeWidth="21"
-                            fill="none"
-                        />
-                        <path
-                            d="M-135-108Q0-76 135-108"
-                            stroke="#615c52"
-                            strokeWidth="8"
-                            fill="none"
-                        />
-                    </g>
-                    <path
-                        d="M1040 654Q1180 568 1320 654"
-                        stroke="#a87767"
-                        strokeWidth="20"
-                        fill="none"
-                    />
-                    <path
-                        d="M1055 626Q1180 538 1305 626M1080 615V653M1130 591V630M1180 584V620M1230 591V630M1280 615V653"
-                        stroke="#bb8b77"
-                        strokeWidth="6"
-                        fill="none"
-                    />
-                    <g fill="#f6d9df" className="petals">
-                        {[170, 340, 750, 1100, 1260].map((x, i) => (
-                            <ellipse
-                                key={x}
-                                cx={x}
-                                cy={260 + i * 65}
-                                rx="5"
-                                ry="10"
-                                transform={`rotate(${i * 25} ${x} ${260 + i * 65})`}
-                            />
-                        ))}
-                    </g>
                 </>
             )}
             {!indoor && (

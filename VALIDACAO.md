@@ -79,3 +79,36 @@ A execução real de `start.ps1 -SetupOnly` abriu o Docker Desktop, iniciou o Po
 - **Publicação:** não realizada. A instalação e as verificações são locais, em um servidor de um processo.
 
 As duas advertências de descontinuação de `httpx` emitidas por dependências não impediram os testes. As versões efetivamente instaladas estão fixadas em `backend/requirements.lock` e `frontend/pnpm-lock.yaml`.
+
+## Atualização: cabelos, personalização visual e cenários estáticos (10/11/2026)
+
+Os modelos de cabelo foram redesenhados e ampliados para 16 opções. As seis opções anteriores mantêm seus identificadores, preservando personagens já salvos. O editor organiza rosto, cabelo, roupas, acessórios e voz em cinco abas, com miniaturas, filtros de comprimento, cores e prévia. Os chapéus recortam as camadas de cabelo, e as miniaturas usam identificadores SVG exclusivos para não interferirem umas nas outras.
+
+As imagens fornecidas foram copiadas sem alterações: Paris, jardim japonês e ilha de doces substituem as respectivas ilustrações; Camp Nou é um cenário adicional. Os outros três cenários foram preservados. Os sete cenários não possuem animações, e a configuração manual de animações foi removida. A preferência de acessibilidade do sistema operacional continua sendo respeitada pelos demais elementos da interface.
+
+| Verificação desta atualização | Resultado |
+| --- | --- |
+| Testes completos do backend | 118 aprovados |
+| Testes completos do frontend | 33 aprovados |
+| TypeScript e compilação de produção | Aprovados |
+| Revisão no navegador | 1440 × 1000, 1024 × 900, 390 × 844 e 320 × 760 |
+| Carregamento e ausência de animação dos cenários | Sete aprovados, sem depender da preferência de redução de movimento |
+| Preservação das quatro imagens de referência | Arquivos idênticos aos originais, conferidos por SHA-256 |
+
+Os testes do backend verificam os 16 cabelos com os três formatos de rosto e os três estados de chapéu, a persistência das novas opções, a preservação das cópias dos personagens nas conversas e a rejeição de valores desconhecidos. A revisão no navegador percorreu a seleção de idioma/cenário, as cinco abas e a prévia; em computador e celular, também percorreu o salvamento e a criação de conversa com todas as escolhas preservadas. Não houve transbordamento horizontal nas quatro larguras.
+
+Nesta atualização, a revisão do navegador usou respostas de API controladas, e os testes de persistência usaram o banco de testes. Não foram criadas contas, conversas ou alterações no banco Aiven do usuário, nem feitas chamadas pagas de IA. As capturas locais estão em `.runtime/editor-new-desktop.png`, `.runtime/editor-new-tablet.png`, `.runtime/editor-new-mobile.png`, `.runtime/editor-new-small.png`, `.runtime/hairstyles-new.png` e `.runtime/scenes-static.png`.
+
+## Atualização: gênero e voz vinculados (10/11/2026)
+
+A primeira aba da aparência agora é **Gênero e voz**, seguida por **Rosto**, **Cabelo**, **Roupas** e **Acessórios**. Há somente masculino e feminino. A escolha define simultaneamente a voz e a apresentação visual; a aba Rosto não possui um seletor independente de apresentação. Cabelos, roupas, cores e acessórios são preservados ao trocar o gênero.
+
+A API também mantém esse vínculo ao salvar. Personagens antigos com apresentação neutra ou divergente são apresentados de acordo com a voz que já tinham salva, sem exigir migração de banco. As conversas anteriores continuam usando sua própria voz e cópia do personagem.
+
+Foram aprovados **125 testes do backend e 33 do frontend**, além da verificação TypeScript e da compilação de produção. Os testes incluem dados antigos, seleção nos dois sentidos, persistência após reabertura e preservação das conversas anteriores. A revisão no navegador passou nas larguras de 1440, 1024, 390 e 320 px, verificando ordem das abas, duas opções, atualização imediata da prévia, ausência de transbordamento horizontal e salvamento. A revisão usou API controlada; a persistência foi verificada no banco de testes. Prévias: `.runtime/editor-gender-desktop.png`, `.runtime/editor-gender-tablet.png`, `.runtime/editor-gender-mobile.png` e `.runtime/editor-gender-small.png`.
+
+## Atualização: Disney e quatro novos cenários (10/11/2026)
+
+O cenário Parque dos sonhos foi substituído pela imagem da Disney, mantendo o identificador `theme` para continuar funcionando nas conversas existentes. Foram adicionados Oktoberfest (`oktoberfest`), Londres (`london`), Rio de Janeiro (`rio`) e Veneza (`venice`). São 11 cenários, todos estáticos. As cinco novas imagens foram copiadas para `frontend/public/scenes` sem alterações, com igualdade de SHA-256 em relação aos originais.
+
+Passaram os **16 testes de personalização e cenários do backend**, os **33 testes completos do frontend**, a verificação TypeScript e a compilação de produção. Os testes de API verificaram criação, listagem e reabertura dos novos cenários no banco de testes. A revisão no navegador confirmou o carregamento dos 11 cenários, ausência de animações, seleção e prévia das cinco imagens em computador e celular, e criação de conversa com Disney e Veneza, sem transbordamento horizontal. O navegador utilizou API controlada; nenhuma conversa foi criada no Aiven. Capturas: `.runtime/scenes-eleven.png`, `.runtime/new-scene-conversation-desktop.png` e `.runtime/new-scene-conversation-mobile.png`.

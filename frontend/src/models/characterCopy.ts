@@ -4,6 +4,60 @@ import type { Language } from './types';
 type Translation = readonly [string, string, string, string, string, string, string];
 const entries: Translation[] = [
     [
+        'Gênero do personagem',
+        'Character gender',
+        'Género del personaje',
+        'Genre du personnage',
+        'Geschlecht der Figur',
+        'Genere del personaggio',
+        'キャラクターの性別',
+    ],
+    ['Masculino', 'Male', 'Masculino', 'Masculin', 'Männlich', 'Maschile', '男性'],
+    ['Feminino', 'Female', 'Femenino', 'Féminin', 'Weiblich', 'Femminile', '女性'],
+    [
+        'O gênero define automaticamente a voz e a aparência do personagem.',
+        'Gender automatically sets the character’s voice and appearance.',
+        'El género determina automáticamente la voz y la apariencia del personaje.',
+        'Le genre définit automatiquement la voix et l’apparence du personnage.',
+        'Das Geschlecht bestimmt automatisch die Stimme und das Aussehen der Figur.',
+        'Il genere imposta automaticamente la voce e l’aspetto del personaggio.',
+        '性別に合わせて、キャラクターの声と見た目が自動で決まります。',
+    ],
+    ['Degradê', 'Fade', 'Degradado', 'Dégradé', 'Fade', 'Sfumato', 'フェード'],
+    ['Raspado', 'Buzz cut', 'Rapado', 'Coupe rasée', 'Kurz rasiert', 'Rasato', '坊主'],
+    ['Pixie', 'Pixie', 'Pixie', 'Pixie', 'Pixie', 'Pixie', 'ピクシー'],
+    [
+        'Crespo curto',
+        'Short coils',
+        'Afro corto',
+        'Crépu court',
+        'Kurze Naturkrause',
+        'Ricci afro corti',
+        'ショートコイル',
+    ],
+    ['Afro', 'Afro', 'Afro', 'Afro', 'Afro', 'Afro', 'アフロ'],
+    [
+        'Ondas longas',
+        'Long waves',
+        'Ondas largas',
+        'Ondulations longues',
+        'Lange Wellen',
+        'Onde lunghe',
+        'ロングウェーブ',
+    ],
+    ['Locs', 'Locs', 'Locs', 'Locs', 'Locs', 'Locs', 'ロックス'],
+    [
+        'Rabo de cavalo',
+        'Ponytail',
+        'Coleta',
+        'Queue de cheval',
+        'Pferdeschwanz',
+        'Coda di cavallo',
+        'ポニーテール',
+    ],
+    ['Coque alto', 'High bun', 'Moño alto', 'Chignon haut', 'Hoher Dutt', 'Chignon alto', 'お団子'],
+    ['Sem cabelo', 'Bald', 'Sin cabello', 'Sans cheveux', 'Ohne Haare', 'Senza capelli', '髪なし'],
+    [
         'Olá, quem vem aí?',
         'Hello, who is this?',
         'Hola, ¿quién viene?',
@@ -515,7 +569,10 @@ const dictionaries = Object.fromEntries(
 ) as Record<Language, Record<string, string>>;
 
 export function characterText(language: Language, text: string): string {
-    if (language === 'pt' && text === 'Gostos, histórias e pequenos detalhes que tornam seu amigo único.') {
+    if (
+        language === 'pt' &&
+        text === 'Gostos, histórias e pequenos detalhes que tornam seu amigo único.'
+    ) {
         return 'Ex.: Cresci perto do mar e gosto de desenhar mundos imaginários e descobrir músicas novas.';
     }
     return dictionaries[language][text] ?? text;

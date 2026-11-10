@@ -18,13 +18,6 @@ export default function App() {
     const [deleting, setDeleting] = useState(false);
     const [modalBusy, setModalBusy] = useState(false);
     const [modalError, setModalError] = useState('');
-    const [reduced, setReduced] = useState(
-        () => localStorage.getItem('marai:reduced-motion') === 'true',
-    );
-    useEffect(() => {
-        document.documentElement.classList.toggle('reduced-motion', reduced);
-        localStorage.setItem('marai:reduced-motion', String(reduced));
-    }, [reduced]);
     useEffect(() => {
         const handler = () => vm.setPage('home');
         window.addEventListener('marai:home', handler);
@@ -133,17 +126,6 @@ export default function App() {
                             <p>{vm.user.email}</p>
                         </div>
                     </div>
-                    <label className="settings-toggle">
-                        <div>
-                            <strong>Reduzir animações</strong>
-                            <small>Uma experiência com menos movimento.</small>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={reduced}
-                            onChange={(e) => setReduced(e.target.checked)}
-                        />
-                    </label>
                     <div className="settings-info">
                         <ShieldCheck size={21} />
                         <p>

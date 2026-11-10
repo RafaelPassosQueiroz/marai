@@ -22,8 +22,13 @@ export const scenes: { value: Scene; label: string; description: string }[] = [
     { value: 'therapy', label: 'Sala acolhedora', description: 'Uma pausa confortável' },
     { value: 'candy', label: 'Ilha de doces', description: 'Uma dose de imaginação' },
     { value: 'paris', label: 'Encontro em Paris', description: 'Às margens do Sena' },
-    { value: 'theme', label: 'Parque dos sonhos', description: 'Onde a diversão começa' },
+    { value: 'theme', label: 'Disney', description: 'Castelo, diversão e imaginação' },
     { value: 'kyoto', label: 'Jardim em Kyoto', description: 'Entre cerejeiras e descobertas' },
+    { value: 'stadium', label: 'Camp Nou', description: 'Uma conversa nas arquibancadas' },
+    { value: 'oktoberfest', label: 'Oktoberfest', description: 'Cultura e cores da Baviera' },
+    { value: 'london', label: 'Londres', description: 'Às margens do Tâmisa' },
+    { value: 'rio', label: 'Rio de Janeiro', description: 'Sol, mar e um passeio pela orla' },
+    { value: 'venice', label: 'Veneza', description: 'Entre canais, pontes e gôndolas' },
 ];
 export const traits = [
     'Bem-humorado',

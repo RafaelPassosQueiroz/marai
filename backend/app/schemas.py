@@ -1,9 +1,28 @@
 from typing import Literal, get_args
-from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    EmailStr,
+    ConfigDict,
+    field_validator,
+    model_validator,
+)
 
 Language = Literal["en", "es", "fr", "de", "it", "pt", "ja"]
 Level = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
-Scene = Literal["park", "therapy", "candy", "paris", "theme", "kyoto"]
+Scene = Literal[
+    "park",
+    "therapy",
+    "candy",
+    "paris",
+    "theme",
+    "kyoto",
+    "stadium",
+    "oktoberfest",
+    "london",
+    "rio",
+    "venice",
+]
 Trait = Literal[
     "Bem-humorado",
     "Calmo",
@@ -38,8 +57,15 @@ TRAITS = get_args(Trait)
 INTERESTS = get_args(Interest)
 
 
+def appearance_for_voice(appearance, voice):
+    return {
+        **appearance,
+        "presentation": "feminine" if voice == "female" else "masculine",
+    }
+
+
 class Appearance(BaseModel):
-    presentation: Literal["masculine", "feminine", "neutral"] = "masculine"
+    presentation: Literal["masculine", "feminine"] = "masculine"
     skin: str = "#e8ad7b"
     face: Literal["oval", "round", "angular"] = "oval"
     eyes: Literal["almond", "round", "relaxed"] = "almond"
@@ -47,7 +73,24 @@ class Appearance(BaseModel):
     brows: Literal["soft", "bold", "arched"] = "bold"
     nose: Literal["soft", "straight", "round"] = "soft"
     mouth: Literal["smile", "gentle", "wide"] = "smile"
-    hair: Literal["swept", "curly", "long", "bob", "short", "braids"] = "swept"
+    hair: Literal[
+        "swept",
+        "curly",
+        "long",
+        "bob",
+        "short",
+        "braids",
+        "pixie",
+        "waves",
+        "ponytail",
+        "bun",
+        "afro",
+        "coils",
+        "fade",
+        "buzz",
+        "locs",
+        "bald",
+    ] = "swept"
     hair_color: str = "#54382c"
     outfit: Literal["jacket", "hoodie", "shirt", "sweater"] = "jacket"
     clothing_color: str = "#31556d"
@@ -92,6 +135,25 @@ class CharacterInput(BaseModel):
     appearance: Appearance = Field(default_factory=Appearance)
     persona: Persona = Field(default_factory=Persona)
     voice: Literal["male", "female"] = "male"
+
+    @model_validator(mode="before")
+    @classmethod
+    def synchronize_gender_and_voice(cls, data):
+        if not isinstance(data, dict):
+            return data
+        appearance = data.get("appearance", {})
+        if isinstance(appearance, Appearance):
+            appearance = appearance.model_dump()
+        if not isinstance(appearance, dict) or appearance.get(
+            "presentation", "masculine"
+        ) not in ("masculine", "feminine", "neutral"):
+            return data
+        # Older characters may contain a neutral or independently selected presentation.
+        # The saved voice is now the single source for the character's gender.
+        return {
+            **data,
+            "appearance": appearance_for_voice(appearance, data.get("voice", "male")),
+        }
 
     @field_validator("name")
     @classmethod

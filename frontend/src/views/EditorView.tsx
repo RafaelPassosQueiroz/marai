@@ -10,10 +10,11 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import type { Appearance, Character } from '../models/types';
+import type { Character } from '../models/types';
 import { interests, languages, levels, scenes, traits } from '../models/catalog';
 import { Avatar } from '../components/Avatar';
 import { Scene } from '../components/Scene';
+import { AppearanceEditor } from './AppearanceEditor';
 import { useEditorViewModel } from '../viewmodels/useEditorViewModel';
 import { characterText, professionSuggestions } from '../models/characterCopy';
 
@@ -34,62 +35,15 @@ export function EditorView({
     const panel = useRef<HTMLElement>(null);
     useEffect(() => {
         panel.current?.focus({ preventScroll: true });
-        const reduced =
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-            document.documentElement.classList.contains('reduced-motion');
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         window.scrollTo({ top: 0, left: 0, behavior: reduced ? 'auto' : 'smooth' });
     }, [step]);
     const a = c.appearance;
-    const choose = (key: keyof Appearance, label: string, options: [string, string][]) => (
-        <fieldset className="option-group">
-            <legend>{t(label)}</legend>
-            <div className="choice-grid">
-                {options.map(([value, name]) => (
-                    <button
-                        key={value}
-                        type="button"
-                        aria-pressed={a[key] === value}
-                        className={`choice ${a[key] === value ? 'selected' : ''}`}
-                        onClick={() => vm.appearance(key, value as never)}
-                    >
-                        {t(name)}
-                        {a[key] === value && <Check size={13} />}
-                    </button>
-                ))}
-            </div>
-        </fieldset>
-    );
-    const colors = (key: keyof Appearance, label: string, list: string[]) => (
-        <fieldset className="option-group">
-            <legend>{t(label)}</legend>
-            <div className="swatches">
-                {list.map((color, index) => (
-                    <button
-                        type="button"
-                        key={color}
-                        style={{ background: color }}
-                        className={`swatch ${a[key] === color ? 'selected' : ''}`}
-                        onClick={() => vm.appearance(key, color as never)}
-                        aria-label={`${t(label)}, ${t('opção')} ${index + 1}`}
-                        aria-pressed={a[key] === color}
-                    >
-                        {a[key] === color && <Check size={16} />}
-                    </button>
-                ))}
-                <label className="custom-color" title={t('Escolher outra cor')}>
-                    <span>+</span>
-                    <input
-                        type="color"
-                        aria-label={`${t(label)}, ${t('Escolher outra cor')}`}
-                        value={a[key] as string}
-                        onChange={(e) => vm.appearance(key, e.target.value as never)}
-                    />
-                </label>
-            </div>
-        </fieldset>
-    );
     return (
-        <main className="editor-page">
+        <main
+            className={`editor-page ${step === 1 ? 'customizing-avatar' : ''}`}
+            data-appearance-category={step === 1 ? vm.category : undefined}
+        >
             <header className="editor-heading">
                 <button className="text-button" onClick={onBack} disabled={busy}>
                     <ArrowLeft size={17} /> Voltar ao início
@@ -148,6 +102,7 @@ export function EditorView({
                     {step > 0 && (
                         <button
                             className="shuffle-button"
+                            aria-label="Variar aparência"
                             onClick={vm.randomAppearance}
                             disabled={busy}
                         >
@@ -163,196 +118,15 @@ export function EditorView({
                     aria-label="Configurações da etapa atual"
                 >
                     {step === 1 && (
-                        <>
-                            <div className="panel-heading">
-                                <div>
-                                    <span className="eyebrow" lang="pt-BR">
-                                        02 / APARÊNCIA
-                                    </span>
-                                    <h2>{t('Olá, quem vem aí?')}</h2>
-                                </div>
-                                <span className="small-decoration">✳</span>
-                            </div>
-                            <label>
-                                {t('Nome do seu amigo')}
-                                <input
-                                    value={c.name}
-                                    onChange={(e) =>
-                                        vm.setCharacter({ ...c, name: e.target.value })
-                                    }
-                                    placeholder={t('Como ele vai se chamar?')}
-                                    maxLength={60}
-                                    required
-                                />
-                            </label>
-                            <div
-                                className="editor-categories"
-                                role="tablist"
-                                aria-label="Categorias de aparência"
-                            >
-                                {['Rosto', 'Cabelo', 'Roupas', 'Acessórios'].map((cat) => (
-                                    <button
-                                        key={cat}
-                                        role="tab"
-                                        aria-selected={vm.category === cat}
-                                        className={vm.category === cat ? 'active' : ''}
-                                        onClick={() => vm.setCategory(cat)}
-                                    >
-                                        {cat}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="appearance-options">
-                                {vm.category === 'Rosto' && (
-                                    <>
-                                        {choose('presentation', 'Apresentação visual', [
-                                            ['masculine', 'Masculina'],
-                                            ['feminine', 'Feminina'],
-                                            ['neutral', 'Neutra'],
-                                        ])}
-                                        {colors('skin', 'Tom de pele', [
-                                            '#f7d7bc',
-                                            '#f1c8a6',
-                                            '#e8ad7b',
-                                            '#bb815d',
-                                            '#8f5f48',
-                                            '#67483b',
-                                        ])}
-                                        {choose('face', 'Formato do rosto', [
-                                            ['oval', 'Oval'],
-                                            ['round', 'Arredondado'],
-                                            ['angular', 'Marcado'],
-                                        ])}
-                                        {choose('eyes', 'Olhos', [
-                                            ['almond', 'Amendoados'],
-                                            ['round', 'Arredondados'],
-                                            ['relaxed', 'Tranquilos'],
-                                        ])}
-                                        {colors('eye_color', 'Cor dos olhos', [
-                                            '#604630',
-                                            '#315966',
-                                            '#60845b',
-                                            '#352b2b',
-                                            '#987740',
-                                        ])}
-                                        {choose('brows', 'Sobrancelhas', [
-                                            ['soft', 'Suaves'],
-                                            ['bold', 'Marcantes'],
-                                            ['arched', 'Arqueadas'],
-                                        ])}
-                                        {choose('nose', 'Nariz', [
-                                            ['soft', 'Suave'],
-                                            ['straight', 'Reto'],
-                                            ['round', 'Arredondado'],
-                                        ])}
-                                        {choose('mouth', 'Sorriso', [
-                                            ['smile', 'Animado'],
-                                            ['gentle', 'Discreto'],
-                                            ['wide', 'Aberto'],
-                                        ])}
-                                        <div className="toggle-row">
-                                            {(['freckles', 'beard'] as const).map((key, index) => (
-                                                <label key={key} className="check-label">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={a[key]}
-                                                        onChange={(e) =>
-                                                            vm.appearance(key, e.target.checked)
-                                                        }
-                                                    />
-                                                    {t(['Sardas', 'Barba'][index])}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                                {vm.category === 'Cabelo' && (
-                                    <>
-                                        {choose('hair', 'Um estilo que combina', [
-                                            ['swept', 'De lado'],
-                                            ['curly', 'Cacheado'],
-                                            ['long', 'Longo'],
-                                            ['bob', 'Chanel'],
-                                            ['short', 'Curto'],
-                                            ['braids', 'Tranças'],
-                                        ])}
-                                        {colors('hair_color', 'Cor do cabelo', [
-                                            '#54382c',
-                                            '#282831',
-                                            '#a2673a',
-                                            '#cba86a',
-                                            '#7a526e',
-                                            '#b8bab8',
-                                        ])}
-                                    </>
-                                )}
-                                {vm.category === 'Roupas' && (
-                                    <>
-                                        {choose('outfit', 'O que vamos vestir?', [
-                                            ['jacket', 'Jaqueta'],
-                                            ['hoodie', 'Moletom'],
-                                            ['shirt', 'Camiseta'],
-                                            ['sweater', 'Suéter'],
-                                        ])}
-                                        {colors('clothing_color', 'Cor da roupa', [
-                                            '#31556d',
-                                            '#578e7a',
-                                            '#b16f79',
-                                            '#aa9059',
-                                            '#82769f',
-                                            '#dad0b6',
-                                        ])}
-                                    </>
-                                )}
-                                {vm.category === 'Acessórios' && (
-                                    <>
-                                        {choose('glasses', 'Óculos', [
-                                            ['none', 'Sem óculos'],
-                                            ['round', 'Redondos'],
-                                            ['square', 'Retangulares'],
-                                        ])}
-                                        {choose('hat', 'Na cabeça', [
-                                            ['none', 'Sem adereço'],
-                                            ['cap', 'Boné'],
-                                            ['beanie', 'Gorro'],
-                                        ])}
-                                        <div className="toggle-row">
-                                            {(['earrings', 'necklace'] as const).map(
-                                                (key, index) => (
-                                                    <label key={key} className="check-label">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={a[key]}
-                                                            onChange={(e) =>
-                                                                vm.appearance(key, e.target.checked)
-                                                            }
-                                                        />
-                                                        {t(['Brincos', 'Colar'][index])}
-                                                    </label>
-                                                ),
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                            <fieldset className="option-group voice-options">
-                                <legend>{t('Voz do personagem')}</legend>
-                                <div className="choice-grid">
-                                    {(['male', 'female'] as const).map((voice, i) => (
-                                        <button
-                                            key={voice}
-                                            aria-pressed={c.voice === voice}
-                                            className={`choice ${c.voice === voice ? 'selected' : ''}`}
-                                            onClick={() => vm.setCharacter({ ...c, voice })}
-                                        >
-                                            {t(['Masculina', 'Feminina'][i])}
-                                            {c.voice === voice && <Check size={13} />}
-                                        </button>
-                                    ))}
-                                </div>
-                                <small>{t('Uma voz padrão por opção, em todos os idiomas.')}</small>
-                            </fieldset>
-                        </>
+                        <AppearanceEditor
+                            character={c}
+                            language={vm.language}
+                            category={vm.category}
+                            onCategoryChange={vm.setCategory}
+                            onAppearanceChange={vm.appearance}
+                            onCharacterChange={vm.setCharacter}
+                            busy={busy}
+                        />
                     )}
                     {step === 2 && (
                         <>

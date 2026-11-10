@@ -2,6 +2,7 @@ from datetime import timezone
 from fastapi import HTTPException
 from sqlalchemy import select
 from .models import Character, Conversation
+from .schemas import appearance_for_voice
 from .services.safety import REFUSALS
 
 
@@ -31,7 +32,7 @@ def character_data(char):
     return {
         "id": char.id,
         "name": char.name,
-        "appearance": char.appearance,
+        "appearance": appearance_for_voice(char.appearance, char.voice),
         "persona": char.persona,
         "voice": char.voice,
     }
@@ -45,7 +46,12 @@ def conversation_data(conv, include_messages=True):
         "id": conv.id,
         "title": conv.title,
         "character_id": conv.character_id,
-        "snapshot": conv.snapshot,
+        "snapshot": {
+            **conv.snapshot,
+            "appearance": appearance_for_voice(
+                conv.snapshot["appearance"], conv.snapshot["voice"]
+            ),
+        },
         "language": conv.language,
         "level": conv.level,
         "scene": conv.scene,

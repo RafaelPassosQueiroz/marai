@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { Appearance, Character, Language, Level, Persona, Scene } from '../models/types';
 import { defaultCharacter } from '../models/catalog';
+import { hairstyles, withVoicePresentation } from '../models/avatarOptions';
+import type { AppearanceCategory } from '../models/avatarOptions';
 import { api } from '../services/api';
 
 export function useEditorViewModel(
@@ -9,10 +11,10 @@ export function useEditorViewModel(
     onSaved: () => Promise<void>,
 ) {
     const [character, setCharacter] = useState<Character>(() =>
-        structuredClone(initial ?? defaultCharacter),
+        withVoicePresentation(structuredClone(initial ?? defaultCharacter)),
     );
     const [step, setStep] = useState(0);
-    const [category, setCategory] = useState('Rosto');
+    const [category, setCategory] = useState<AppearanceCategory>('voice');
     const [language, setLanguage] = useState<Language>(
         initial?.persona.description_language ?? 'en',
     );
@@ -24,7 +26,9 @@ export function useEditorViewModel(
 
     function appearance<K extends keyof Appearance>(key: K, value: Appearance[K]) {
         setSaved(false);
-        setCharacter((c) => ({ ...c, appearance: { ...c.appearance, [key]: value } }));
+        setCharacter((c) =>
+            withVoicePresentation({ ...c, appearance: { ...c.appearance, [key]: value } }),
+        );
     }
     function persona<K extends keyof Persona>(key: K, value: Persona[K]) {
         setSaved(false);
@@ -47,7 +51,7 @@ export function useEditorViewModel(
             appearance: {
                 ...c.appearance,
                 skin: pick(['#f1c8a6', '#e8ad7b', '#bb815d', '#8f5f48', '#67483b']),
-                hair: pick(['swept', 'curly', 'long', 'bob', 'short', 'braids']),
+                hair: pick(hairstyles.map((style) => style.value)),
                 hair_color: pick(['#54382c', '#282831', '#a2673a', '#cba86a', '#7a526e']),
                 outfit: pick(['jacket', 'hoodie', 'shirt', 'sweater']),
                 clothing_color: pick(['#31556d', '#578e7a', '#b16f79', '#aa9059', '#82769f']),
@@ -101,7 +105,10 @@ export function useEditorViewModel(
 
     return {
         character,
-        setCharacter,
+        setCharacter: (value: Character) => {
+            setSaved(false);
+            setCharacter(withVoicePresentation(value));
+        },
         step,
         setStep,
         category,

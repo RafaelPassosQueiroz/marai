@@ -311,45 +311,6 @@ em {
     height: 100%;
     overflow: visible;
 }
-.clouds {
-    animation: clouds 35s ease-in-out infinite alternate;
-}
-.tree-leaves {
-    transform-origin: 0 50px;
-    animation: leaves 9s ease-in-out infinite alternate;
-}
-.flower {
-    transform-box: fill-box;
-    transform-origin: bottom;
-    animation: flowers 6s ease-in-out infinite alternate;
-}
-.petals {
-    animation: petals 12s linear infinite;
-}
-.light {
-    animation: lights 3s ease-in-out infinite alternate;
-}
-@keyframes clouds {
-    to {
-        transform: translateX(65px);
-    }
-}
-@keyframes leaves {
-    to {
-        transform: rotate(1.4deg);
-    }
-}
-@keyframes flowers {
-    to {
-        rotate: 6deg;
-    }
-}
-@keyframes petals {
-    to {
-        translate: 30px 90px;
-        opacity: 0.1;
-    }
-}
 @keyframes lights {
     to {
         opacity: 0.5;
@@ -1584,28 +1545,6 @@ em {
     color: #b2c897;
     font-size: 36px;
 }
-.editor-categories {
-    display: flex;
-    gap: 4px;
-    border-bottom: 1px solid #e7eee2;
-}
-.editor-categories button {
-    flex: 1;
-    padding: 11px 2px 13px;
-    border-bottom: 2px solid transparent;
-    color: #637b69;
-    font-size: 11px;
-}
-.editor-categories button.active {
-    border-bottom-color: #91b478;
-    color: #5b7f5d;
-}
-.appearance-options {
-    display: flex;
-    flex-direction: column;
-    gap: 23px;
-    min-height: 210px;
-}
 .option-group {
     width: 100%;
 }
@@ -2693,23 +2632,6 @@ em {
     font-size: 11px;
     color: #97a48e;
     margin-top: 4px;
-}
-.settings-toggle {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 17px 0;
-    border-top: 1px solid #e4eade;
-    border-bottom: 1px solid #e4eade;
-}
-.settings-toggle strong {
-    font-size: 12px;
-}
-.settings-toggle small {
-    display: block;
-    font-size: 10px;
-    margin-top: 5px;
 }
 .settings-info {
     display: flex;
@@ -4008,14 +3930,6 @@ em {
         transition: none !important;
     }
 }
-.reduced-motion *,
-.reduced-motion *::before,
-.reduced-motion *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-}
-
 /* Compact, complete speech copy. Font fitting measures the full answer before revealing words. */
 .speech-area {
     margin-top: 36px;
