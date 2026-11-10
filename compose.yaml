@@ -1,0 +1,20 @@
+# Keep the original project identity so renaming the folder preserves local data.
+name: bilingua
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: marai
+      POSTGRES_PASSWORD: marai_local
+      POSTGRES_DB: marai
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - marai_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marai"]
+      interval: 3s
+      retries: 20
+volumes:
+  marai_data:
