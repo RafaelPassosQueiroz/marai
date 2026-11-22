@@ -15,7 +15,6 @@ import { Avatar } from '../components/Avatar';
 export function HomeView({
     user,
     conversations,
-    characters,
     onNew,
     onOpen,
 }: {
@@ -74,7 +73,7 @@ export function HomeView({
             </section>
             <div className="section-heading">
                 <div>
-                    <span className="eyebrow">CONEXÕES QUE CONTINUAM</span>
+                    <span className="eyebrow">DO SEU JEITO</span>
                     <h2>Suas conversas</h2>
                 </div>
                 <button className="text-button" onClick={() => onNew()}>
@@ -124,30 +123,6 @@ export function HomeView({
                         Vamos conversar <ArrowRight size={17} />
                     </button>
                 </div>
-            )}
-            {characters.length > 0 && (
-                <>
-                    <div className="section-heading">
-                        <div>
-                            <span className="eyebrow">DO SEU JEITO</span>
-                            <h2>Seus amigos fictícios</h2>
-                        </div>
-                    </div>
-                    <div className="friends-row">
-                        {characters.map((c) => (
-                            <button className="saved-friend" key={c.id} onClick={() => onNew(c)}>
-                                <div className="friend-portrait">
-                                    <Avatar appearance={c.appearance} name={c.name} />
-                                </div>
-                                <span>
-                                    <strong>{c.name}</strong>
-                                    <small>Editar ou começar outra conversa</small>
-                                </span>
-                                <ArrowRight size={17} />
-                            </button>
-                        ))}
-                    </div>
-                </>
             )}
             <section className="languages-section">
                 <div>
