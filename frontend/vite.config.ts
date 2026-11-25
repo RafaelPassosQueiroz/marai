@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => ({
     plugins: [react()],
+    base: mode === 'cloudflare' ? '/' : '/marai/',
     ...(mode === 'cloudflare' && {
-        base: '/',
         build: { outDir: 'dist-cloudflare' },
     }),
     server: {
