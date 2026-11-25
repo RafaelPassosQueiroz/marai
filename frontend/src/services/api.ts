@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type {
     Character,
     Config,
@@ -14,12 +16,13 @@ declare global {
     interface ImportMetaEnv {
         readonly VITE_API_BASE_URL?: string;
     }
-    interface ImportMeta {
-        readonly env: ImportMetaEnv;
-    }
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+const API_BASE_URL =
+    import.meta.env.MODE === 'cloudflare'
+        ? ''
+        : (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+export const googleLoginUrl = `${API_BASE_URL}/api/auth/google`;
 
 export class ApiError extends Error {
     constructor(

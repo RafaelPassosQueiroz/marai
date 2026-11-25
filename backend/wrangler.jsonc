@@ -5,14 +5,24 @@
   "compatibility_date": "2026-11-25",
   "compatibility_flags": ["python_workers"],
   "workers_dev": true,
+  "assets": {
+    "directory": "../frontend/dist-cloudflare",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*", "/docs", "/docs/*", "/redoc", "/openapi.json"]
+  },
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
       "id": "REPLACE_WITH_EXISTING_HYPERDRIVE_CONFIG_ID"
     }
   ],
-  "vars": {
-    "FRONTEND_URL": "https://rafaelpassosqueiroz.github.io",
-    "COOKIE_SECURE": "true"
-  }
+  "durable_objects": {
+    "bindings": [
+      { "name": "PASSWORD_KDF", "class_name": "PasswordKdf" }
+    ]
+  },
+  "migrations": [
+    { "tag": "password-kdf-v1", "new_sqlite_classes": ["PasswordKdf"] }
+  ],
+  "observability": { "enabled": false }
 }

@@ -3,10 +3,10 @@ import base64
 import io
 import wave
 import httpx
-import edge_tts
 from mutagen import File as AudioFile
 from fastapi import HTTPException
-from ..config import settings
+from ..config import IS_WORKER, settings
+from .speechify import speechify_speech
 
 VOICES = {
     "en": ("en-US-GuyNeural", "en-US-JennyNeural"),
@@ -59,6 +59,8 @@ async def transcribe(data: bytes, filename: str, mime: str, language: str):
 
 
 async def edge_speech(text, language, gender, level):
+    import edge_tts
+
     voice = VOICES[language][gender == "female"]
     rate = "-18%" if level == "A1" else "-10%" if level == "A2" else "+0%"
     audio, timings = bytearray(), []
@@ -139,8 +141,13 @@ async def synthesize(text, language, gender, level):
         except (httpx.HTTPError, KeyError, IndexError, ValueError):
             pass
     try:
+        fallback = (
+            speechify_speech
+            if IS_WORKER or settings.tts_provider == "speechify"
+            else edge_speech
+        )
         return await asyncio.wait_for(
-            edge_speech(text, language, gender, level), timeout=60
+            fallback(text, language, gender, level), timeout=60
         )
     except Exception:
         raise HTTPException(

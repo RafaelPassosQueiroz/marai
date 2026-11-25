@@ -46,15 +46,10 @@ def create_database_engine(database_url, **options):
         mode = query.pop("sslmode", "verify-full")
         certificate = query.pop("sslrootcert", None)
         timeout = int(query.pop("connect_timeout", "10"))
-        if mode == "verify-full":
-            context = create_verified_ssl_context(certificate)
-            connect_args.update(ssl_context=context, timeout=timeout)
-        elif mode == "disable":
-            # Hyperdrive terminates the connection to Aiven and expects a
-            # plaintext connection from the Worker to its local socket.
-            connect_args.update(ssl_context=None, timeout=timeout)
-        else:
+        if mode != "verify-full":
             raise ValueError("A conexão pg8000 exige verificação completa do certificado TLS.")
+        context = create_verified_ssl_context(certificate)
+        connect_args.update(ssl_context=context, timeout=timeout)
         url = url.set(query=query)
     elif url.drivername.startswith("postgresql"):
         connect_args.setdefault("connect_timeout", 5)

@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
-from ..database import get_db
+from ..database import get_db, inline_on_workers
 from ..models import User, Character
 from ..schemas import CharacterInput, Persona, SurpriseInput, TRAITS, INTERESTS
 from ..services.dialogue import LANGUAGES
@@ -15,6 +15,7 @@ router = APIRouter()
 
 
 @router.get("/api/characters")
+@inline_on_workers
 def characters(user: User = Depends(current_user), db: DBSession = Depends(get_db)):
     return [
         character_data(c)
