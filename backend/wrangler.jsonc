@@ -1,15 +1,14 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "marai-api",
-  "main": "worker.py",
+  "main": ".wrangler/marai-src/worker.py",
+  "base_dir": ".wrangler/marai-src",
   "compatibility_date": "2026-11-25",
   "compatibility_flags": ["python_workers"],
-  "rules": [
-    { "type": "PythonModule", "globs": ["app/**/*.py"], "fallthrough": false },
-    { "type": "Text", "globs": [], "fallthrough": false },
-    { "type": "Data", "globs": [], "fallthrough": false },
-    { "type": "CompiledWasm", "globs": [], "fallthrough": false }
-  ],
+  "build": {
+    "command": "node prepare-worker.mjs",
+    "watch_dir": ["app", "worker.py", "prepare-worker.mjs"]
+  },
   "workers_dev": true,
   "assets": {
     "directory": "../frontend/dist-cloudflare",

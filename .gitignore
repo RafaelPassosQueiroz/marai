@@ -1,5 +1,6 @@
 .env
 .venv/
+/backend/.wrangler/marai-src/
 node_modules/
 frontend/dist/
 frontend/dist-cloudflare/
