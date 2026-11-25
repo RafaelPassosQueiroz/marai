@@ -10,6 +10,17 @@ import type {
 } from '../models/types';
 import type { TranslationLanguage, TranslationResult } from '../models/translation';
 
+declare global {
+    interface ImportMetaEnv {
+        readonly VITE_API_BASE_URL?: string;
+    }
+    interface ImportMeta {
+        readonly env: ImportMetaEnv;
+    }
+}
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+
 export class ApiError extends Error {
     constructor(
         message: string,
@@ -24,7 +35,7 @@ async function request<T>(path: string, method = 'GET', data?: unknown): Promise
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 240_000);
     try {
-        const response = await fetch(`/api${path}`, {
+        const response = await fetch(`${API_BASE_URL}/api${path}`, {
             method,
             credentials: 'include',
             signal: controller.signal,

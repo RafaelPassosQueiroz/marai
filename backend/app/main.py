@@ -1,5 +1,6 @@
 """Marai HTTP application composition; business state lives in ViewModels."""
 
+import os
 import secrets
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -21,15 +22,20 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 # Only OAuth state uses this signed cookie. Persistent login uses revocable server-side sessions.
-state_path = ROOT / ".runtime" / "oauth-state-secret"
-state_path.parent.mkdir(exist_ok=True)
-if not state_path.exists():
-    state_path.write_text(secrets.token_urlsafe(48), encoding="utf-8")
+oauth_state_secret = os.getenv("OAUTH_STATE_SECRET")
+if not oauth_state_secret:
+    # Local fallback. Worker files are isolate-local and non-persistent, so the
+    # Cloudflare entrypoint must provide this value as a secret binding.
+    state_path = ROOT / ".runtime" / "oauth-state-secret"
+    state_path.parent.mkdir(exist_ok=True)
+    if not state_path.exists():
+        state_path.write_text(secrets.token_urlsafe(48), encoding="utf-8")
+    oauth_state_secret = state_path.read_text().strip()
 app.add_middleware(
     SessionMiddleware,
-    secret_key=state_path.read_text().strip(),
+    secret_key=oauth_state_secret,
     session_cookie="marai_oauth",
-    same_site="lax",
+    same_site="none" if settings.cookie_secure else "lax",
     https_only=settings.cookie_secure,
 )
 
