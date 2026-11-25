@@ -1,4 +1,3 @@
-from asyncio import Lock
 from contextvars import ContextVar
 from inspect import signature
 
@@ -8,7 +7,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.pool import NullPool
 from .config import IS_WORKER, settings
-from .database_engine import create_database_engine
 
 
 class Base(DeclarativeBase):
@@ -32,39 +30,45 @@ if IS_WORKER:
             timeout=10,
         )
 
-    # The socket to the binding is request-scoped. Hyperdrive pools and uses
-    # TLS for the separate connection from Cloudflare to Aiven.
-    engine = create_engine(
-        "postgresql+pg8000://",
-        creator=connect_hyperdrive,
-        poolclass=NullPool,
-        hide_parameters=True,
-    )
+    def create_worker_engine():
+        # Sockets stay in the request that opened them. Hyperdrive pools
+        # the separate TLS connections to Aiven.
+        return create_engine(
+            "postgresql+pg8000://",
+            creator=connect_hyperdrive,
+            poolclass=NullPool,
+            hide_parameters=True,
+        )
+
+    engine = None
 else:
+    from .database_engine import create_database_engine
+
     engine = create_database_engine(settings.database_url)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 
 if IS_WORKER:
-    _initialize_engine = Lock()
-    _engine_ready = False
-
     async def get_db(request: Request):
-        global _engine_ready
+        global engine
         token = _hyperdrive.set(request.scope["env"].HYPERDRIVE)
         try:
-            with SessionLocal() as db:
-                if not _engine_ready:
-                    # The first connection initializes shared dialect metadata.
-                    async with _initialize_engine:
-                        if not _engine_ready:
-                            try:
-                                db.connection()
-                            except SQLAlchemyError:
-                                raise HTTPException(
-                                    503, "Banco de dados indisponível."
-                                ) from None
-                            _engine_ready = True
+            request_engine = engine
+            initializing = request_engine is None
+            if initializing:
+                # Concurrent cold requests initialize independently. Waiting on
+                # another request's I/O via a shared lock can hang in workerd.
+                request_engine = create_worker_engine()
+            with SessionLocal(bind=request_engine) as db:
+                if initializing:
+                    try:
+                        db.connection()
+                    except SQLAlchemyError:
+                        raise HTTPException(
+                            503, "Banco de dados indisponível."
+                        ) from None
+                    if engine is None:
+                        engine = request_engine
                 yield db
         finally:
             _hyperdrive.reset(token)

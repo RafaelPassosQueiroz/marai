@@ -9,6 +9,9 @@
     "command": "node prepare-worker.mjs",
     "watch_dir": ["app", "worker.py", "prepare-worker.mjs"]
   },
+  "python_modules": {
+    "exclude": ["**/*.pyc", "**/__pycache__/**", "**/*.pyi"]
+  },
   "workers_dev": true,
   "assets": {
     "directory": "../frontend/dist-cloudflare",
