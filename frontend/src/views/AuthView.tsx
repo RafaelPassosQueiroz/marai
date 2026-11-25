@@ -8,7 +8,7 @@ import {
     MessageCircle,
     ShieldCheck,
 } from 'lucide-react';
-import { api } from '../services/api';
+import { api, googleLoginUrl } from '../services/api';
 import type { Config, User } from '../models/types';
 import { defaultCharacter } from '../models/catalog';
 import { Avatar } from '../components/Avatar';
@@ -194,7 +194,7 @@ export function AuthView({
                         className="button google full"
                         onClick={() =>
                             config?.google_enabled
-                                ? location.assign('/api/auth/google')
+                                ? location.assign(googleLoginUrl)
                                 : setGoogleHelp(!googleHelp)
                         }
                     >

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
-from ..database import get_db
+from ..database import get_db, inline_on_workers
 from ..models import User, Conversation
 from ..schemas import ConversationInput, TurnInput, RenameInput
 from ..security import current_user
@@ -17,6 +17,7 @@ router = APIRouter()
 
 
 @router.get("/api/conversations")
+@inline_on_workers
 def conversations(user: User = Depends(current_user), db: DBSession = Depends(get_db)):
     return [
         conversation_data(c, False)
@@ -29,6 +30,7 @@ def conversations(user: User = Depends(current_user), db: DBSession = Depends(ge
 
 
 @router.post("/api/conversations")
+@inline_on_workers
 def create_conversation(
     data: ConversationInput,
     user: User = Depends(current_user),
@@ -50,6 +52,7 @@ def create_conversation(
 
 
 @router.get("/api/conversations/{conversation_id}")
+@inline_on_workers
 def get_conversation(
     conversation_id: str,
     user: User = Depends(current_user),
@@ -59,6 +62,7 @@ def get_conversation(
 
 
 @router.patch("/api/conversations/{conversation_id}")
+@inline_on_workers
 def rename(
     conversation_id: str,
     data: RenameInput,
@@ -72,6 +76,7 @@ def rename(
 
 
 @router.delete("/api/conversations/{conversation_id}")
+@inline_on_workers
 def remove(
     conversation_id: str,
     user: User = Depends(current_user),

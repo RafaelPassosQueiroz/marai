@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type {
     Character,
     Config,
@@ -9,6 +11,18 @@ import type {
     User,
 } from '../models/types';
 import type { TranslationLanguage, TranslationResult } from '../models/translation';
+
+declare global {
+    interface ImportMetaEnv {
+        readonly VITE_API_BASE_URL?: string;
+    }
+}
+
+const API_BASE_URL =
+    import.meta.env.MODE === 'cloudflare'
+        ? ''
+        : (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+export const googleLoginUrl = `${API_BASE_URL}/api/auth/google`;
 
 export class ApiError extends Error {
     constructor(
@@ -24,7 +38,7 @@ async function request<T>(path: string, method = 'GET', data?: unknown): Promise
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 240_000);
     try {
-        const response = await fetch(`/api${path}`, {
+        const response = await fetch(`${API_BASE_URL}/api${path}`, {
             method,
             credentials: 'include',
             signal: controller.signal,
