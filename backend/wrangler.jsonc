@@ -10,12 +10,12 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api", "/api/*", "/docs", "/docs/*", "/redoc", "/openapi.json"]
   },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "REPLACE_WITH_EXISTING_HYPERDRIVE_CONFIG_ID"
-    }
-  ],
+"hyperdrive": [
+  {
+    "binding": "HYPERDRIVE",
+    "id": "6cd38b9e9ac24af889dae1009d1b4d43"
+  }
+],
   "durable_objects": {
     "bindings": [
       { "name": "PASSWORD_KDF", "class_name": "PasswordKdf" }
