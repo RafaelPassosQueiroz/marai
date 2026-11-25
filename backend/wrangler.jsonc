@@ -4,6 +4,12 @@
   "main": "worker.py",
   "compatibility_date": "2026-11-25",
   "compatibility_flags": ["python_workers"],
+  "rules": [
+    { "type": "PythonModule", "globs": ["app/**/*.py"], "fallthrough": false },
+    { "type": "Text", "globs": [], "fallthrough": false },
+    { "type": "Data", "globs": [], "fallthrough": false },
+    { "type": "CompiledWasm", "globs": [], "fallthrough": false }
+  ],
   "workers_dev": true,
   "assets": {
     "directory": "../frontend/dist-cloudflare",
