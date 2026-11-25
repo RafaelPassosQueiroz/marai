@@ -1,0 +1,11 @@
+{
+  "name": "marai-worker",
+  "private": true,
+  "scripts": {
+    "worker:sync": "uv pip sync --python cpython-3.14.2-emscripten-wasm32-musl --target python_modules --no-build --preview-features pylock pylock.toml",
+    "worker:check": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "wrangler": "4.168.0"
+  }
+}

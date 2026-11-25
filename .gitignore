@@ -1,6 +1,8 @@
 .env
 .venv/
 /backend/.wrangler/marai-src/
+/backend/.venv-workers/
+/backend/python_modules/
 node_modules/
 frontend/dist/
 frontend/dist-cloudflare/

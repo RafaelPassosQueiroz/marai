@@ -18,10 +18,10 @@ dependencies = [
     "mutagen>=1.47,<2",
     "authlib>=1.4,<2",
     "itsdangerous>=2.2,<3",
+    "workers-runtime-sdk==1.9.7",
 ]
 
 [dependency-groups]
 dev = [
-    "workers-py",
-    "workers-runtime-sdk",
+    "workers-py>=1.17.9,<2",
 ]

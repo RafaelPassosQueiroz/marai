@@ -2,6 +2,9 @@
 
 from urllib.parse import urlsplit
 
+# The SDK hooks this import to initialize the Rust hash-map seed in the snapshot.
+# Authlib can otherwise load the Rust bindings through hashes before the hook runs.
+import cryptography.exceptions  # noqa: F401
 from js import Blob, Object, Request as FetchRequest
 from pyodide.ffi import to_js
 from starlette.formparsers import MultiPartParser

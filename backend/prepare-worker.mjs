@@ -14,6 +14,10 @@ const backend = realpathSync(dirname(fileURLToPath(import.meta.url)));
 const cache = join(backend, ".wrangler");
 const sourceRoot = join(cache, "marai-src");
 
+if (!existsSync(join(backend, "python_modules", "_workers_sdk_patch_loader.pth"))) {
+  throw new Error("Worker dependencies are missing. Run npm run worker:sync in backend.");
+}
+
 mkdirSync(cache, { recursive: true });
 if (
   realpathSync(cache) !== cache ||

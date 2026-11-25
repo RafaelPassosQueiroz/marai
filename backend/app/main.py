@@ -9,7 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session as DBSession
 from .config import BODY_OVERHEAD_BYTES, IS_WORKER, ROOT, settings
-from .database import engine, get_db, inline_on_workers
+from .database import get_db, inline_on_workers
 from .views import auth, characters, conversations, translation, voice
 
 app = FastAPI(title="Marai", version="1.0.0")
@@ -72,12 +72,7 @@ def health(db: DBSession = Depends(get_db)):
         db.execute(text("SELECT 1"))
     except Exception:
         raise HTTPException(503, "Banco de dados indisponível. Inicie o PostgreSQL.")
-    return {
-        "status": "ok",
-        "database": "postgresql"
-        if engine.dialect.name == "postgresql"
-        else engine.dialect.name,
-    }
+    return {"status": "ok", "database": db.get_bind().dialect.name}
 
 
 @app.get("/api/config")
