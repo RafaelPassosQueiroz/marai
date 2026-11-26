@@ -118,6 +118,7 @@ afterEach(async () => {
 
 describe('conversation playback and recording drafts', () => {
     it('pauses and resumes at the same time, and restarts cached audio and text from zero', async () => {
+        vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
         class Player {
             static latest: Player;
             currentTime = 0;
@@ -125,6 +126,7 @@ describe('conversation playback and recording drafts', () => {
             src = '';
             paused = true;
             ontimeupdate: (() => void) | null = null;
+            onseeked: (() => void) | null = null;
             onended: (() => void) | null = null;
             onerror: (() => void) | null = null;
             constructor() {
@@ -140,8 +142,8 @@ describe('conversation playback and recording drafts', () => {
         vi.stubGlobal('Audio', Player);
         vi.mocked(api.speech).mockResolvedValue({
             audio: btoa('test-audio'),
-            mime: 'audio/mpeg',
-            provider: 'test',
+            mime: 'audio/wav',
+            provider: 'gemini',
             voice: 'test',
             timings: [
                 { start: 0.1, end: 0.8, text: 'Hello' },
@@ -161,7 +163,11 @@ describe('conversation playback and recording drafts', () => {
         const player = Player.latest;
         await act(async () => {
             player.currentTime = 1.4;
-            player.ontimeupdate?.();
+            vi.advanceTimersToNextFrame();
+        });
+        expect(vm.displayText).toBe('Hello friend');
+        expect(vm.progress).toBeCloseTo(1.4 / 3);
+        await act(async () => {
             vm.pauseAudio();
         });
         expect(vm.state).toBe('paused');
@@ -169,13 +175,18 @@ describe('conversation playback and recording drafts', () => {
         expect(player.paused).toBe(true);
         const pausedText = vm.displayText;
         await act(async () => {
-            await Promise.resolve();
+            vi.advanceTimersByTime(500);
         });
         expect(vm.displayText).toBe(pausedText);
         await act(async () => {
+            player.currentTime = 0.4;
+            player.onseeked?.();
+        });
+        expect(vm.displayText).toBe('Hello');
+        await act(async () => {
             await vm.continueAudio();
         });
-        expect(player.currentTime).toBe(1.4);
+        expect(player.currentTime).toBe(0.4);
         expect(vm.state).toBe('playing');
         await act(async () => {
             vm.pauseAudio();
@@ -256,6 +267,7 @@ describe('conversation playback and recording drafts', () => {
             });
         });
         expect(vm.state).toBe('playing');
+        expect(vm.displayText).toBe('Hello.');
         await act(async () => {
             Player.latest.currentTime = 10;
             Player.latest.ontimeupdate?.();

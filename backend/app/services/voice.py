@@ -6,8 +6,10 @@ import httpx
 from mutagen import File as AudioFile
 from fastapi import HTTPException
 from ..config import IS_WORKER, settings
+from .dialogue import LANGUAGES
 from .speechify import speechify_speech
 
+GEMINI_INTERACTIONS = "https://generativelanguage.googleapis.com/v1beta/interactions"
 VOICES = {
     "en": ("en-US-GuyNeural", "en-US-JennyNeural"),
     "es": ("es-ES-AlvaroNeural", "es-ES-ElviraNeural"),
@@ -87,48 +89,107 @@ async def edge_speech(text, language, gender, level):
     }
 
 
-async def gemini_speech(text, language, gender, level):
-    voice = "Charon" if gender == "male" else "Kore"
-    pace = (
-        "slowly and clearly"
-        if level in ("A1", "A2")
-        else "at a natural conversational pace"
-    )
-    async with httpx.AsyncClient(timeout=70) as client:
-        r = await client.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_tts_model}:generateContent",
-            headers={"x-goog-api-key": settings.gemini_api_key},
+def _model_output(payload):
+    for step in payload["steps"]:
+        if step["type"] == "model_output":
+            yield from step["content"]
+
+
+async def _gemini_word_timings(client: httpx.AsyncClient, encoded_audio: str):
+    max_encoded_bytes = 4 * ((settings.max_audio_bytes + 2) // 3)
+    if len(encoded_audio) > max_encoded_bytes:
+        return []
+    try:
+        audio = base64.b64decode(encoded_audio, validate=True)
+        if len(audio) > settings.max_audio_bytes:
+            return []
+        duration = audio_duration(audio, "audio/wav")
+        if not duration:
+            return []
+        response = await client.post(
+            GEMINI_INTERACTIONS,
+            timeout=12,
             json={
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": f"Read exactly the following text {pace}. Do not add words.\n{text}"
-                            }
-                        ]
-                    }
-                ],
-                "generationConfig": {
-                    "responseModalities": ["AUDIO"],
-                    "speechConfig": {
-                        "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}
+                "model": "models/gemini-3.5-transcribe",
+                "store": False,
+                "input": [{"type": "audio", "mime_type": "audio/wav", "data": encoded_audio}],
+                "generation_config": {
+                    "transcription_config": {
+                        "mode": {"type": "verbatim", "timestamp_granularities": ["word"]},
                     },
                 },
             },
         )
-    r.raise_for_status()
-    inline = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
-    pcm = base64.b64decode(inline["data"])
-    output = io.BytesIO()
-    with wave.open(output, "wb") as wav:
-        wav.setnchannels(1)
-        wav.setsampwidth(2)
-        wav.setframerate(24000)
-        wav.writeframes(pcm)
+        response.raise_for_status()
+        timings = []
+        previous_start = 0.0
+        for part in _model_output(response.json()):
+            if part["type"] != "text":
+                continue
+            for word in part.get("annotations") or []:
+                if word["type"] != "word_info":
+                    continue
+                text = word["text"]
+                start, end = word["start_offset"], word["end_offset"]
+                if not all(isinstance(offset, str) and offset.endswith("s") for offset in (start, end)):
+                    return []
+                start, end = float(start[:-1]), float(end[:-1])
+                if not isinstance(text, str) or not text.strip() or not previous_start <= start < end <= duration:
+                    return []
+                timings.append({"start": start, "end": end, "text": text})
+                previous_start = start
+        return timings
+    except (httpx.HTTPError, HTTPException, KeyError, TypeError, ValueError):
+        return []
+
+
+async def gemini_speech(text, language, gender, level):
+    voice = "Charon" if gender == "male" else "Kore"
+    pace = {
+        "A1": "slowly and clearly",
+        "A2": "slightly slower than a natural conversation, with clear diction",
+    }.get(level, "at a natural conversational pace")
+    async with httpx.AsyncClient(
+        timeout=70, headers={"x-goog-api-key": settings.gemini_api_key}
+    ) as client:
+        r = await client.post(
+            GEMINI_INTERACTIONS,
+            json={
+                "model": settings.gemini_tts_model,
+                "store": False,
+                "input": [
+                    {
+                        "type": "user_input",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": text,
+                                "annotations": [
+                                    {
+                                        "type": "speech_metadata",
+                                        "style": f"Speaking {LANGUAGES[language]} {pace}.",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+                "response_format": {"type": "audio", "mime_type": "audio/wav"},
+                "generation_config": {"speech_config": [{"voice": voice}]},
+            },
+        )
+        r.raise_for_status()
+        audio = None
+        for part in _model_output(r.json()):
+            if part["type"] == "audio":
+                audio = part["data"]
+        if not isinstance(audio, str) or not audio:
+            raise ValueError("Gemini did not return WAV audio")
+        timings = await _gemini_word_timings(client, audio)
     return {
-        "audio": base64.b64encode(output.getvalue()).decode(),
+        "audio": audio,
         "mime": "audio/wav",
-        "timings": [],
+        "timings": timings,
         "provider": "gemini",
         "voice": voice,
     }
@@ -138,7 +199,7 @@ async def synthesize(text, language, gender, level):
     if settings.tts_provider == "gemini" and settings.gemini_api_key:
         try:
             return await gemini_speech(text, language, gender, level)
-        except (httpx.HTTPError, KeyError, IndexError, ValueError):
+        except (httpx.HTTPError, KeyError, TypeError, ValueError):
             pass
     try:
         fallback = (
