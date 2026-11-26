@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Conversation, ConversationState, Speech } from '../models/types';
 import { api, ApiError } from '../services/api';
-import { revealedText } from '../services/reveal';
+import { revealedText, speechCues } from '../services/reveal';
 import { useAudioRecorder } from './useAudioRecorder';
 
 type Pending = {
@@ -24,9 +24,11 @@ export function useConversationViewModel(
     const [progress, setProgress] = useState(0);
     const [speechMessage, setSpeechMessage] = useState('');
     const [speechContent, setSpeechContent] = useState('');
-    const activeSpeech = useRef<{ id: string; content: string; timings: Speech['timings'] } | null>(
-        null,
-    );
+    const activeSpeech = useRef<{
+        id: string;
+        content: string;
+        cues: ReturnType<typeof speechCues>;
+    } | null>(null);
     const [retryKind, setRetryKind] = useState<'turn' | 'voice' | 'upload' | null>(null);
     const audio = useRef<HTMLAudioElement | null>(null);
     const audioUrl = useRef('');
@@ -56,6 +58,8 @@ export function useConversationViewModel(
             // Retired players must not overwrite the state of a new recording or reply.
             audio.current.onended = null;
             audio.current.ontimeupdate = null;
+            audio.current.onloadedmetadata = null;
+            audio.current.onseeked = null;
             audio.current.onerror = null;
             audio.current.pause();
             audio.current.src = '';
@@ -76,19 +80,30 @@ export function useConversationViewModel(
         };
     }, [stopAudio]);
 
-    function syncPlayback() {
+    const syncPlayback = useCallback(() => {
         const player = audio.current;
         const speech = activeSpeech.current;
         if (!alive.current || !player || !speech) return;
+        const { currentTime, duration, ended } = player;
         setRevealed(
-            revealedText(speech.content, player.currentTime, player.duration, speech.timings),
+            ended ? speech.content : revealedText(speech.content, currentTime, duration, speech.cues),
         );
-        setProgress(
-            Number.isFinite(player.duration) && player.duration > 0
-                ? player.currentTime / player.duration
-                : 0,
-        );
-    }
+        const playbackProgress =
+            Number.isFinite(duration) && duration > 0 && Number.isFinite(currentTime)
+                ? Math.max(0, Math.min(1, currentTime / duration))
+                : 0;
+        setProgress(ended ? 1 : playbackProgress);
+    }, []);
+
+    useEffect(() => {
+        if (state !== 'playing') return;
+        const update = () => {
+            syncPlayback();
+            frame = requestAnimationFrame(update);
+        };
+        let frame = requestAnimationFrame(update);
+        return () => cancelAnimationFrame(frame);
+    }, [state, syncPlayback]);
 
     function pauseAudio() {
         if (!audio.current || busyRef.current || recording.hasDraft()) return;
@@ -107,7 +122,7 @@ export function useConversationViewModel(
             setState('playing');
             setError('');
         } catch {
-            if (!alive.current) return;
+            if (!alive.current || player !== audio.current) return;
             setState('paused');
             setError(
                 'O navegador não conseguiu iniciar o áudio. Clique em Continuar para tentar novamente.',
@@ -117,8 +132,9 @@ export function useConversationViewModel(
 
     async function restartAudio() {
         const player = audio.current;
+        const speech = activeSpeech.current;
         if (busyRef.current || recording.hasDraft()) return;
-        if (!player || !activeSpeech.current || state === 'error') {
+        if (!player || !speech || state === 'error') {
             if (state === 'error') stopAudio();
             await play();
             return;
@@ -126,7 +142,7 @@ export function useConversationViewModel(
         player.pause();
         player.currentTime = 0;
         setProgress(0);
-        setRevealed('');
+        setRevealed(speech.cues.length ? '' : speech.content);
         await continueAudio();
     }
 
@@ -152,23 +168,29 @@ export function useConversationViewModel(
             audioUrl.current = url;
             const player = new Audio(url);
             audio.current = player;
+            const cues = speechCues(message.content, result.timings);
             activeSpeech.current = {
                 id: message.id,
                 content: message.content,
-                timings: result.timings,
+                cues,
             };
             setSpeechMessage(message.id);
             setProgress(0);
-            player.ontimeupdate = syncPlayback;
+            const syncCurrentPlayer = () => {
+                if (player === audio.current) syncPlayback();
+            };
+            player.ontimeupdate = syncCurrentPlayer;
+            player.onloadedmetadata = syncCurrentPlayer;
+            player.onseeked = syncCurrentPlayer;
             player.onended = () => {
-                if (alive.current) {
+                if (alive.current && player === audio.current) {
                     setState('idle');
                     setRevealed(message.content);
                     setProgress(1);
                 }
             };
             player.onerror = () => {
-                if (alive.current) {
+                if (alive.current && player === audio.current) {
                     setState('error');
                     setError('Não foi possível reproduzir. Tente ouvir novamente.');
                     setRetryKind('voice');
@@ -176,12 +198,14 @@ export function useConversationViewModel(
                 }
             };
             try {
-                setRevealed('');
+                setRevealed(cues.length ? '' : message.content);
                 await player.play();
-                if (alive.current) {
+                if (alive.current && player === audio.current) {
+                    syncPlayback();
                     setState('playing');
                 }
             } catch {
+                if (!alive.current || player !== audio.current) return;
                 setState('paused');
                 syncPlayback();
                 setError('Seu navegador pausou o áudio. Clique em Continuar para reproduzir.');

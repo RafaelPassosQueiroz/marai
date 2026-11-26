@@ -1,25 +1,64 @@
 import type { Speech } from '../models/types';
 
+type SpeechCue = { start: number; endIndex: number };
+
+function normalizeSpokenText(text: string): string {
+    return text.normalize('NFKD').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+export function speechCues(text: string, timings: Speech['timings']): SpeechCue[] {
+    if (!timings.length) return [];
+
+    // Keep offsets into the displayed text, including any combining marks.
+    let normalized = '';
+    let end = 0;
+    const offsets: number[] = [];
+    for (const [original] of text.matchAll(/\P{M}\p{M}*|\p{M}+/gu)) {
+        const segment = normalizeSpokenText(original);
+        end += original.length;
+        normalized += segment;
+        for (let i = 0; i < segment.length; i++) offsets.push(end);
+    }
+
+    const cues: SpeechCue[] = [];
+    let cursor = 0;
+    let previousStart = 0;
+    for (const timing of timings) {
+        const word = normalizeSpokenText(timing.text);
+        if (!word) continue;
+        if (
+            !Number.isFinite(timing.start) ||
+            !Number.isFinite(timing.end) ||
+            timing.start < previousStart ||
+            timing.end < timing.start ||
+            !normalized.startsWith(word, cursor)
+        ) {
+            return [];
+        }
+
+        cursor += word.length;
+        cues.push({ start: timing.start, endIndex: offsets[cursor - 1] });
+        previousStart = timing.start;
+    }
+    return cursor === normalized.length ? cues : [];
+}
+
 export function revealedText(
     text: string,
     time: number,
     duration: number,
-    timings: Speech['timings'],
+    cues: SpeechCue[],
 ): string {
-    if (!Number.isFinite(duration) || duration <= 0) return '';
-    if (time >= duration - 0.08) return text;
-    if (timings.length) {
-        let cursor = 0;
-        for (const word of timings) {
-            if (word.start > time) break;
-            const index = text.indexOf(word.text, cursor);
-            if (index !== -1) cursor = index + word.text.length;
-        }
-        return text.slice(0, cursor);
+    if (!cues.length) return text;
+    if (!Number.isFinite(duration) || duration <= 0 || !Number.isFinite(time)) return '';
+    if (time >= duration || cues[cues.length - 1].start >= duration) return text;
+
+    let first = 0;
+    let last = cues.length;
+    while (first < last) {
+        const middle = Math.floor((first + last) / 2);
+        if (cues[middle].start <= time) first = middle + 1;
+        else last = middle;
     }
-    // Duration-based segment approximation, also supports Japanese without spaces.
-    const segments = text.match(/\S+\s*|\s+/gu) ?? [];
-    const parts = segments.length < 3 ? Array.from(text) : segments;
-    const count = Math.ceil(Math.max(0, Math.min(1, time / duration)) * parts.length);
-    return parts.slice(0, count).join('');
+    return text.slice(0, cues[first - 1]?.endIndex ?? 0);
 }
